@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "mobile",
-    "slug": "mobile",
+    "slug": "pizzaria-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -22,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.juanjcm.pizzariaapp"
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +40,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "5b700cb4-e6f9-4a46-b252-d5df96570793"
+        "projectId": "cfe9ddf8-fdcc-4174-84c4-9341a4994bee"
       }
     },
     "owner": "juanjcm",
@@ -47,7 +48,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/5b700cb4-e6f9-4a46-b252-d5df96570793"
+      "url": "https://u.expo.dev/cfe9ddf8-fdcc-4174-84c4-9341a4994bee"
     }
   }
 }

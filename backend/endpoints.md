@@ -907,9 +907,9 @@ Content-Type: application/json
 
 ---
 
-### 5. Finalizar Pedido
+### 5. Finalizar Pedido (Pronto)
 
-Marca um pedido como finalizado.
+Marca um pedido como pronto para entrega.
 
 **Endpoint:** `PUT /order/finish`
 
@@ -944,7 +944,7 @@ Content-Type: application/json
   "table": 5,
   "name": "Mesa 5 - João",
   "draft": false,
-  "status": true,
+  "status": "READY",
   "createdAt": "2025-11-12T10:30:00.000Z"
 }
 ```
@@ -968,8 +968,8 @@ Content-Type: application/json
 
 **Observações:**
 
-- Altera `status` de `false` para `true`
-- Indica que o pedido foi entregue/finalizado
+- Altera `status` para `"READY"`
+- Indica que o pedido está pronto para servir
 
 ---
 
@@ -1070,7 +1070,91 @@ GET /orders?draft=true     → Retorna pedidos em rascunho
 
 ---
 
-### 7. Detalhes do Pedido
+### 7. Atualizar Quantidade do Item
+
+Atualiza a quantidade de um item existente no pedido.
+
+**Endpoint:** `PUT /order/item`
+
+**Autenticação:** ✅ Requerida
+
+**Permissão:** STAFF ou ADMIN
+
+**Headers:**
+
+```
+Authorization: Bearer SEU_TOKEN_JWT
+Content-Type: application/json
+```
+
+**Body:**
+
+```json
+{
+  "item_id": "990e8400-e29b-41d4-a716-446655440001",
+  "amount": 3
+}
+```
+
+**Validações:**
+
+- `item_id`: String não vazia (obrigatório)
+- `amount`: Número inteiro (obrigatório) — se for <= 0, o item é removido
+
+**Resposta de Sucesso (200):**
+
+```json
+{
+  "id": "990e8400-e29b-41d4-a716-446655440001",
+  "amount": 3,
+  "order_id": "880e8400-e29b-41d4-a716-446655440001",
+  "product_id": "770e8400-e29b-41d4-a716-446655440001",
+  "createdAt": "2025-11-12T10:35:00.000Z",
+  "product": {
+    "id": "770e8400-e29b-41d4-a716-446655440001",
+    "name": "Pizza Margherita",
+    "price": 3500,
+    "description": "Molho de tomate, mussarela e manjericão",
+    "banner": "https://res.cloudinary.com/.../products/margherita.jpg"
+  }
+}
+```
+
+**Resposta de Sucesso (200) — quando amount <= 0 (item removido):**
+
+```json
+{
+  "message": "Item removido"
+}
+```
+
+**Respostas de Erro:**
+
+```json
+// 400 - Item não encontrado
+{
+  "error": "Item não encontrado"
+}
+
+// 400 - Validação falhou
+{
+  "error": "Erro validação",
+  "details": [
+    { "message": "ID do item precisa ser uma string" },
+    { "message": "Quantidade precisa ser um número" }
+  ]
+}
+```
+
+**Observações:**
+
+- Se `amount` for 0 ou negativo, o item é removido do pedido (delete físico)
+- Se `amount` for positivo, a quantidade é atualizada
+- Útil para o garçom ajustar quantidades sem precisar remover e adicionar novamente
+
+---
+
+### 8. Detalhes do Pedido
 
 Busca informações completas de um pedido específico.
 
@@ -1163,7 +1247,7 @@ GET /order/detail?order_id=880e8400-e29b-41d4-a716-446655440001
 
 ---
 
-### 8. Deletar Pedido
+### 9. Deletar Pedido
 
 Deleta permanentemente um pedido e todos seus itens.
 
@@ -1224,6 +1308,79 @@ DELETE /order?order_id=880e8400-e29b-41d4-a716-446655440001
 
 ---
 
+### 10. Encerrar Pedido
+
+Encerra um pedido que estava pronto, alterando o status para finalizado.
+
+**Endpoint:** `PUT /order/close`
+
+**Autenticação:** ✅ Requerida
+
+**Permissão:** STAFF ou ADMIN
+
+**Headers:**
+
+```
+Authorization: Bearer SEU_TOKEN_JWT
+Content-Type: application/json
+```
+
+**Body:**
+
+```json
+{
+  "order_id": "880e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**Validações:**
+
+- `order_id`: String não vazia (obrigatório)
+
+**Resposta de Sucesso (200):**
+
+```json
+{
+  "id": "880e8400-e29b-41d4-a716-446655440001",
+  "table": 5,
+  "name": "Mesa 5 - João",
+  "draft": false,
+  "status": "CLOSED",
+  "createdAt": "2025-11-12T10:30:00.000Z",
+  "updatedAt": "2025-11-12T10:40:00.000Z"
+}
+```
+
+**Respostas de Erro:**
+
+```json
+// 400 - Pedido não encontrado
+{
+  "error": "Pedido não encontrado"
+}
+
+// 400 - Pedido não está pronto
+{
+  "error": "Pedido precisa estar como pronto para ser encerrado"
+}
+
+// 400 - Validação falhou
+{
+  "error": "Erro validação",
+  "details": [
+    { "message": "ID do pedido precisa ser uma string" }
+  ]
+}
+```
+
+**Observações:**
+
+- Requer que o pedido esteja com `status: "READY"` para ser encerrado
+- Altera `status` para `"CLOSED"`
+- Indica que o pedido foi finalizado e entregue ao cliente
+
+---
+
 ## 📊 Tabela Resumo
 
 ### Todos os Endpoints
@@ -1244,6 +1401,8 @@ DELETE /order?order_id=880e8400-e29b-41d4-a716-446655440001
 | DELETE | /order/remove     | ✅           | STAFF/ADMIN | Remover item do pedido              |
 | PUT    | /order/send       | ✅           | STAFF/ADMIN | Enviar pedido (confirmar)           |
 | PUT    | /order/finish     | ✅           | STAFF/ADMIN | Finalizar pedido                    |
+| PUT    | /order/item       | ✅           | STAFF/ADMIN | Atualizar quantidade de item        |
+| PUT    | /order/close      | ✅           | STAFF/ADMIN | Encerrar pedido                     |
 | GET    | /orders           | ✅           | STAFF/ADMIN | Listar pedidos (filtro por draft)   |
 | GET    | /order/detail     | ✅           | STAFF/ADMIN | Detalhes de um pedido específico    |
 | DELETE | /order            | ✅           | STAFF/ADMIN | Deletar pedido                      |
@@ -1289,7 +1448,7 @@ DELETE /order?order_id=880e8400-e29b-41d4-a716-446655440001
 ### Status dos Pedidos
 
 - `draft`: `true` = rascunho, `false` = confirmado/enviado
-- `status`: `false` = em andamento, `true` = finalizado
+- `status`: `"PRODUCTION"` = em produção, `"READY"` = pronto para servir, `"CLOSED"` = finalizado
 
 ### Upload de Imagens
 

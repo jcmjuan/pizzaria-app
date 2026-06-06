@@ -252,7 +252,7 @@ Order (1) ───────────────────────�
 {
   id: string (UUID)          // Identificador único
   table: number (int)        // Número da mesa
-  status: boolean            // false = aberto, true = fechado
+  status: OrderStatus       // "PRODUCTION" | "READY" | "CLOSED"
   draft: boolean             // true = rascunho, false = confirmado
   name: string?              // Nome opcional para o pedido
   items: Item[]              // Itens do pedido
@@ -756,7 +756,9 @@ Valida deleção de pedido:
 | POST   | /order/add    | ✅           | STAFF/ADMIN | Adicionar item ao pedido          |
 | DELETE | /order/remove | ✅           | STAFF/ADMIN | Remover item do pedido            |
 | PUT    | /order/send   | ✅           | STAFF/ADMIN | Enviar pedido (confirmar)         |
-| PUT    | /order/finish | ✅           | STAFF/ADMIN | Finalizar pedido                  |
+| PUT    | /order/finish | ✅           | STAFF/ADMIN | Finalizar pedido (pronto)         |
+| PUT    | /order/close  | ✅           | STAFF/ADMIN | Encerrar pedido                   |
+| PUT    | /order/item   | ✅           | STAFF/ADMIN | Atualizar quantidade de item      |
 | GET    | /orders       | ✅           | STAFF/ADMIN | Listar pedidos (filtro por draft) |
 | GET    | /order/detail | ✅           | STAFF/ADMIN | Detalhes de um pedido específico  |
 | DELETE | /order        | ✅           | STAFF/ADMIN | Deletar pedido                    |
@@ -1252,7 +1254,7 @@ Envia o pedido para a cozinha (sai do modo rascunho).
 
 #### **PUT /order/finish**
 
-Marca um pedido como finalizado.
+Marca um pedido como pronto para servir.
 
 **Controller**: `FinishOrderController`  
 **Service**: `FinishOrderService`  
@@ -1275,15 +1277,99 @@ Marca um pedido como finalizado.
   "table": 5,
   "name": "Mesa 5 - João",
   "draft": false,
-  "status": true,
+  "status": "READY",
   "createdAt": "2025-11-12T10:30:00.000Z"
 }
 ```
 
 **Observações**:
 
-- Altera `status` de `false` para `true`
-- Indica que o pedido foi entregue/finalizado
+- Altera `status` para `"READY"`
+- Indica que o pedido está pronto para servir
+
+---
+
+#### **PUT /order/item**
+
+Atualiza a quantidade de um item existente no pedido.
+
+**Controller**: `UpdateItemController`  
+**Service**: `UpdateItemService`  
+**Middlewares**: `isAuthenticated`, `validateSchema(updateItemSchema)`  
+**Permissão**: STAFF ou ADMIN
+
+**Body**:
+
+```json
+{
+  "item_id": "uuid-do-item",
+  "amount": 3
+}
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "id": "uuid-do-item",
+  "amount": 3,
+  "order_id": "uuid-do-pedido",
+  "product_id": "uuid-do-produto",
+  "createdAt": "2025-11-12T10:35:00.000Z",
+  "product": {
+    "id": "uuid-do-produto",
+    "name": "Pizza Margherita",
+    "price": 3500,
+    "description": "Molho de tomate, mussarela e manjericão",
+    "banner": "https://res.cloudinary.com/.../products/margherita.jpg"
+  }
+}
+```
+
+**Observações**:
+
+- Se `amount` for 0 ou negativo, o item é removido do pedido
+- Se `amount` for positivo, apenas a quantidade é atualizada
+- Valida se o item existe antes de atualizar
+
+---
+
+#### **PUT /order/close**
+
+Encerra um pedido que estava pronto, alterando o status para finalizado.
+
+**Controller**: `CloseOrderController`  
+**Service**: `CloseOrderService`  
+**Middlewares**: `isAuthenticated`, `validateSchema(closeOrderSchema)`  
+**Permissão**: STAFF ou ADMIN
+
+**Body**:
+
+```json
+{
+  "order_id": "uuid-do-pedido"
+}
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "id": "uuid-do-pedido",
+  "table": 5,
+  "name": "Mesa 5 - João",
+  "draft": false,
+  "status": "CLOSED",
+  "createdAt": "2025-11-12T10:30:00.000Z",
+  "updatedAt": "2025-11-12T10:40:00.000Z"
+}
+```
+
+**Observações**:
+
+- Requer que o pedido esteja com `status: "READY"` para ser encerrado
+- Altera `status` para `"CLOSED"`
+- Indica que o pedido foi finalizado e entregue ao cliente
 
 ---
 
@@ -1832,8 +1918,10 @@ npm run dev
 - `CreateOrderController` - Cria novo pedido
 - `AddItemController` - Adiciona item ao pedido
 - `RemoveItemController` - Remove item do pedido
+- `UpdateItemController` - Atualiza quantidade de item
 - `SendOrderController` - Envia pedido para cozinha
-- `FinishOrderController` - Finaliza pedido
+- `FinishOrderController` - Finaliza pedido (pronto)
+- `CloseOrderController` - Encerra pedido
 - `ListOrdersController` - Lista pedidos com filtro
 - `DetailOrderController` - Detalhes de um pedido
 - `DeleteOrderController` - Deleta pedido permanentemente
@@ -1863,8 +1951,10 @@ npm run dev
 - `CreateOrderService` - Lógica de criação de pedido
 - `AddItemOrderService` - Lógica de adição de item
 - `RemoveItemOrderService` - Lógica de remoção de item
+- `UpdateItemService` - Lógica de atualização de quantidade
 - `SendOrderService` - Lógica de envio do pedido
-- `FinishOrderService` - Lógica de finalização
+- `FinishOrderService` - Lógica de finalização (pronto)
+- `CloseOrderService` - Lógica de encerramento
 - `ListOrderService` - Lógica de listagem com filtro
 - `DetailOrderService` - Lógica de detalhes do pedido
 - `DeleteOrderService` - Lógica de deleção permanente

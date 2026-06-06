@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { QuantityControl } from "../../components/QuantityControl";
+import { formatPrice } from "../../utils/format";
 
 export default function Order() {
   const router = useRouter();
@@ -40,6 +41,16 @@ export default function Order() {
   const [loadingAddItem, setLoadingAddItem] = useState(false);
 
   const [items, setItems] = useState<Item[]>([]);
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (highlightedItemId) {
+      const timer = setTimeout(() => setHighlightedItemId(null), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedItemId]);
 
   useEffect(() => {
     async function loadDataCategories() {
@@ -107,7 +118,7 @@ export default function Order() {
         setItems([...items, response.data]);
       }
 
-      setSelectedCategory("");
+      setHighlightedItemId(response.data.id);
       setSelectedProduct("");
       setQuantity(1);
     } catch (err) {
@@ -191,7 +202,7 @@ export default function Order() {
           <Text style={styles.headerTitle}>Mesa {table}</Text>
 
           <Pressable style={styles.closeButton} onPress={() => router.back()}>
-            <Ionicons name="trash" size={20} color={colors.primary} />
+            <Ionicons name="arrow-back" size={20} color={colors.primary} />
           </Pressable>
         </View>
       </View>
@@ -200,66 +211,69 @@ export default function Order() {
         style={styles.scrollContent}
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       >
-        <Select
-          label="Categorias"
-          placeholder="Selecione a categoria..."
-          options={categories.map((category) => ({
-            label: category.name,
-            value: category.id,
-          }))}
-          selectedValue={selectedCategory}
-          onValueChange={setSelectedCategory}
-        />
-
-        {loadingProducts ? (
-          <ActivityIndicator size="small" color={colors.brand} />
-        ) : (
-          selectedCategory && (
-            <Select
-              placeholder="Selecione um produto..."
-              options={products.map((product) => ({
-                label: product.name,
-                value: product.id,
-              }))}
-              selectedValue={selectedProduct}
-              onValueChange={setSelectedProduct}
-            />
-          )
-        )}
-
-        {selectedProduct && (
-          <View style={styles.quantitySection}>
-            <Text style={styles.quantityLabel}>Quantidade</Text>
-            <QuantityControl
-              quantity={quantity}
-              onIncrement={() => setQuantity((quantity) => quantity + 1)}
-              onDecrement={() => {
-                if (quantity <= 1) {
-                  setQuantity(1);
-                  return;
-                }
-
-                setQuantity((quantity) => quantity - 1);
-              }}
-            />
-          </View>
-        )}
-
-        {selectedProduct && (
-          <Button
-            title="Adicionar"
-            onPress={handleAddItem}
-            variant="secondary"
+        <View style={styles.addSection}>
+          <Select
+            label="Categorias"
+            placeholder="Selecione a categoria..."
+            options={categories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            }))}
+            selectedValue={selectedCategory}
+            onValueChange={setSelectedCategory}
           />
-        )}
+
+          {loadingProducts ? (
+            <ActivityIndicator size="small" color={colors.brand} />
+          ) : (
+            selectedCategory && (
+              <Select
+                placeholder="Selecione um produto..."
+                options={products.map((product) => ({
+                  label: product.name,
+                  value: product.id,
+                }))}
+                selectedValue={selectedProduct}
+                onValueChange={setSelectedProduct}
+              />
+            )
+          )}
+
+          {selectedProduct && (
+            <View style={styles.quantitySection}>
+              <Text style={styles.quantityLabel}>Quantidade</Text>
+              <QuantityControl
+                quantity={quantity}
+                onIncrement={() => setQuantity((quantity) => quantity + 1)}
+                onDecrement={() => {
+                  if (quantity <= 1) {
+                    setQuantity(1);
+                    return;
+                  }
+
+                  setQuantity((quantity) => quantity - 1);
+                }}
+              />
+            </View>
+          )}
+
+          {selectedProduct && (
+            <Button
+              title="Adicionar"
+              onPress={handleAddItem}
+              loading={loadingAddItem}
+            />
+          )}
+        </View>
 
         {items.length > 0 && (
           <View style={styles.itemsSection}>
-            <Text style={styles.itemsTitle}>Itens adicionados</Text>
+            <Text style={styles.itemsTitle}>Itens adicionados ({items.length})</Text>
             {items.map((item) => (
               <OrderItem
                 item={item}
                 key={item.id}
+                highlighted={item.id === highlightedItemId}
                 onRemove={handleRemoveItem}
                 onIncrement={(id) => handleUpdateItemQuantity(id, 1)}
                 onDecrement={(id) => handleUpdateItemQuantity(id, -1)}
@@ -270,6 +284,19 @@ export default function Order() {
 
         {items.length > 0 && (
           <View style={styles.footer}>
+            <View style={styles.summary}>
+              <Text style={styles.summaryText}>
+                {items.reduce((sum, item) => sum + item.amount, 0)} itens
+              </Text>
+              <Text style={styles.summaryTotal}>
+                {formatPrice(
+                  items.reduce(
+                    (sum, item) => sum + item.product.price * item.amount,
+                    0
+                  )
+                )}
+              </Text>
+            </View>
             <Button title="Avançar" onPress={handleAdvance} />
           </View>
         )}
@@ -315,6 +342,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: 14,
   },
+  addSection: {
+    backgroundColor: colors.backgroundInput,
+    borderRadius: 8,
+    padding: spacing.md,
+    gap: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.brand,
+  },
   quantitySection: {
     flexDirection: "row",
     alignItems: "center",
@@ -336,6 +371,24 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
   },
   footer: {
-    paddingTop: 24,
+    paddingTop: spacing.lg,
+    gap: spacing.md,
+  },
+  summary: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: colors.backgroundInput,
+    borderRadius: 8,
+    padding: spacing.md,
+  },
+  summaryText: {
+    color: colors.gray,
+    fontSize: fontSize.md,
+  },
+  summaryTotal: {
+    color: colors.primary,
+    fontSize: fontSize.lg,
+    fontWeight: "bold",
   },
 });

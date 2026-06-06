@@ -2,7 +2,8 @@ import { QuantityControl } from "@/components/QuantityControl";
 import { colors, fontSize, spacing } from "@/constants/theme";
 import { Item } from "@/types";
 import { Feather } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatPrice } from "../utils/format";
 
 interface OrderItemProps {
@@ -10,6 +11,7 @@ interface OrderItemProps {
   onRemove: (item_id: string) => Promise<void>;
   onIncrement: (item_id: string) => void;
   onDecrement: (item_id: string) => void;
+  highlighted?: boolean;
 }
 
 export function OrderItem({
@@ -17,9 +19,28 @@ export function OrderItem({
   onRemove,
   onIncrement,
   onDecrement,
+  highlighted,
 }: OrderItemProps) {
+  const highlightAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (highlighted) {
+      highlightAnim.setValue(1);
+      Animated.timing(highlightAnim, {
+        toValue: 0,
+        duration: 1500,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [highlighted]);
+
+  const borderColor = highlightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.borderColor, colors.green],
+  });
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { borderColor }]}>
       <View style={styles.content}>
         <Text style={styles.productName}>{item.product?.name}</Text>
         <Text style={styles.productDetail}>
@@ -36,7 +57,7 @@ export function OrderItem({
       <Pressable style={styles.deleteButton} onPress={() => onRemove(item.id)}>
         <Feather name="trash" size={20} color={colors.primary} />
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 

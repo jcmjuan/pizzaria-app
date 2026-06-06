@@ -26,7 +26,7 @@ export function QuantityControl({
       <View style={styles.quantityContainer}>
         <Text style={styles.quantityText}>{quantity}</Text>
       </View>
-      <Pressable style={styles.button} onPress={onIncrement}>
+      <Pressable style={styles.buttonIncrement} onPress={onIncrement}>
         <Text style={styles.buttonText}>+</Text>
       </Pressable>
     </View>
@@ -42,6 +42,12 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.red,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+  },
+  buttonIncrement: {
+    backgroundColor: colors.green,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 8,

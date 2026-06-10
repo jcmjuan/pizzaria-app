@@ -2,7 +2,6 @@
 import { useState } from "react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -20,10 +19,9 @@ import { Category } from "@/lib/types";
 
 interface CategoryFormProps {
   category?: Category;
-  children?: React.ReactNode;
 }
 
-export function CategoryForm({ category, children }: CategoryFormProps) {
+export function CategoryForm({ category }: CategoryFormProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const isEditing = !!category;
@@ -49,8 +47,10 @@ export function CategoryForm({ category, children }: CategoryFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ? (
-          children
+        {isEditing ? (
+          <button className="p-2 rounded-md hover:bg-gray-600 transition-colors">
+            <Pencil className="w-4 h-4 text-gray-300" />
+          </button>
         ) : (
           <Button className="bg-brand-primary hover:bg-brand-primary font-semibold">
             <Plus className="h-5 w-5 mr-2" />

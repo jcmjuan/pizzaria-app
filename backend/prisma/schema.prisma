@@ -20,8 +20,10 @@ enum Role {
 }
 
 enum OrderStatus {
-  PRODUCTION
+  PENDING
+  IN_PRODUCTION
   READY
+  SERVED
   CLOSED
 }
 
@@ -33,6 +35,7 @@ model User {
   role      Role     @default(STAFF)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
 
   @@map("users")
 }
@@ -66,9 +69,11 @@ model Product {
 model Order{
   id String @id @default(uuid())
   table Int
-  status OrderStatus @default(PRODUCTION)
+  status OrderStatus @default(PENDING)
   draft Boolean @default(true)
   name String?
+  user_id String
+  user User @relation(fields:[user_id], references:[id])
   items Item[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,6 +84,7 @@ model Order{
 model Item{
   id String @id @default(uuid())
   amount Int
+  status OrderStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   order_id String

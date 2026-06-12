@@ -39,10 +39,12 @@ class AddItemOrderService {
         where: { id: existingItem.id },
         data: {
           amount: existingItem.amount + amount,
+          status: "PENDING",
         },
         select: {
           id: true,
           amount: true,
+          status: true,
           order_id: true,
           product_id: true,
           createdAt: true,
@@ -70,6 +72,7 @@ class AddItemOrderService {
       select: {
         id: true,
         amount: true,
+        status: true,
         order_id: true,
         product_id: true,
         createdAt: true,

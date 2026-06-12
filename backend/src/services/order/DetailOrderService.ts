@@ -17,11 +17,13 @@ class DetailOrderService {
         name: true,
         draft: true,
         status: true,
+        user_id: true,
         createdAt: true,
         items: {
           select: {
             id: true,
             amount: true,
+            status: true,
             product: {
               select: {
                 id: true,

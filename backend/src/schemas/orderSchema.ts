@@ -74,3 +74,23 @@ export const updateItemSchema = z.object({
       .int({ message: "Quantidade precisa ser um número inteiro" }),
   }),
 })
+
+export const startOrderSchema = z.object({
+  body: z.object({
+    order_id: z.string({ message: "ID do pedido precisa ser uma string"}),
+    item_ids: z.array(z.string()).optional(),
+  })
+})
+
+export const serveOrderSchema = z.object({
+  body: z.object({
+    order_id: z.string({ message: "ID do pedido precisa ser uma string"}),
+    item_ids: z.array(z.string()).optional(),
+  })
+})
+
+export const activeOrderSchema = z.object({
+  query: z.object({
+    table: z.string({ message: "O número da mesa é obrigatório" }),
+  }),
+})

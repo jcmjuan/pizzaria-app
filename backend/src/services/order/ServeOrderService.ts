@@ -1,13 +1,13 @@
 import prismaClient from "../../prisma/index";
 import { recalculateOrderStatus } from "./RecalculateOrderStatus";
 
-interface FinishOrderProps {
+interface ServeOrderProps {
   order_id: string;
   item_ids?: string[];
 }
 
-class FinishOrderService {
-  async execute({ order_id, item_ids }: FinishOrderProps) {
+class ServeOrderService {
+  async execute({ order_id, item_ids }: ServeOrderProps) {
     const order = await prismaClient.order.findFirst({
       where: { id: order_id },
     });
@@ -21,17 +21,17 @@ class FinishOrderService {
         where: {
           id: { in: item_ids },
           order_id: order_id,
-          status: "IN_PRODUCTION",
+          status: "READY",
         },
-        data: { status: "READY" },
+        data: { status: "SERVED" },
       });
     } else {
       await prismaClient.item.updateMany({
         where: {
           order_id: order_id,
-          status: "IN_PRODUCTION",
+          status: "READY",
         },
-        data: { status: "READY" },
+        data: { status: "SERVED" },
       });
     }
 
@@ -69,4 +69,4 @@ class FinishOrderService {
   }
 }
 
-export { FinishOrderService };
+export { ServeOrderService };

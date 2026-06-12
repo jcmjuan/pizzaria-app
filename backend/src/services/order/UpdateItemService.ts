@@ -29,6 +29,7 @@ class UpdateItemService {
       select: {
         id: true,
         amount: true,
+        status: true,
         order_id: true,
         product_id: true,
         createdAt: true,

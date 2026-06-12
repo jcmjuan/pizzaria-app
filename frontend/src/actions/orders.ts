@@ -4,7 +4,7 @@ import { apiClient } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-export async function finishOrderAction(orderId: string) {
+export async function finishOrderAction(orderId: string, itemIds?: string[]) {
   if (!orderId) {
     return { success: false, error: "Falha ao finalizar o pedido" };
   }
@@ -16,9 +16,13 @@ export async function finishOrderAction(orderId: string) {
       return { success: false, error: "Falha ao finalizar o pedido" };
     }
 
-    const data = {
+    const data: any = {
       order_id: orderId,
     };
+
+    if (itemIds && itemIds.length > 0) {
+      data.item_ids = itemIds;
+    }
 
     await apiClient("/order/finish", {
       method: "PUT",
@@ -32,6 +36,41 @@ export async function finishOrderAction(orderId: string) {
   } catch (err) {
     console.log(err);
     return { success: false, error: "Falha ao finalizar o pedido" };
+  }
+}
+
+export async function startOrderAction(orderId: string, itemIds?: string[]) {
+  if (!orderId) {
+    return { success: false, error: "Falha ao iniciar o preparo" };
+  }
+
+  try {
+    const token = await getToken();
+
+    if (!token) {
+      return { success: false, error: "Falha ao iniciar o preparo" };
+    }
+
+    const data: any = {
+      order_id: orderId,
+    };
+
+    if (itemIds && itemIds.length > 0) {
+      data.item_ids = itemIds;
+    }
+
+    await apiClient("/order/start", {
+      method: "PUT",
+      body: JSON.stringify(data),
+      token: token,
+    });
+
+    revalidatePath("/dashboard");
+
+    return { success: true, error: "" };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: "Falha ao iniciar o preparo" };
   }
 }
 

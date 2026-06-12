@@ -40,6 +40,13 @@ export default function AuthenticatedLayout() {
           headerTitle: "Finalizar pedido",
         }}
       />
+      <Stack.Screen
+        name="orders-list"
+        options={{
+          headerShown: true,
+          headerTitle: "Meus Pedidos",
+        }}
+      />
     </Stack>
   );
 }

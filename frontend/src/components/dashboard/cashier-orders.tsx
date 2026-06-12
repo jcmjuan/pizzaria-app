@@ -22,7 +22,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
 
   const fetchOrders = async () => {
     try {
-      const response = await apiClient<Order[]>("/orders?draft=false&status=READY", {
+      const response = await apiClient<Order[]>("/orders?draft=false&status=SERVED", {
         method: "GET",
         cache: "no-store",
         token: token,
@@ -57,7 +57,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Caixa</h1>
           <p className="text-sm sm:text-base mt-1">
-            Pedidos prontos para cobrança
+            Pedidos servidos prontos para cobrança
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
       ) : orders.length === 0 ? (
         <div>
           <p className="text-center text-gray-300">
-            Nenhum pedido pronto para cobrança.
+            Nenhum pedido servido para cobrança.
           </p>
         </div>
       ) : (
@@ -91,8 +91,8 @@ export function CashierOrders({ token }: CashierOrdersProps) {
                   <CardTitle className="text-lg lg:text-xl font-bold">
                     Mesa {order.table}
                   </CardTitle>
-                  <Badge variant="default" className="bg-green-500/20 text-green-500 text-xs select-none">
-                    pronto
+                  <Badge variant="default" className="bg-blue-500/20 text-blue-500 text-xs select-none">
+                    servido
                   </Badge>
                 </div>
               </CardHeader>

@@ -39,6 +39,7 @@ export default function Order() {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingAddItem, setLoadingAddItem] = useState(false);
+  const [loadingExistingItems, setLoadingExistingItems] = useState(true);
 
   const [items, setItems] = useState<Item[]>([]);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(
@@ -53,11 +54,10 @@ export default function Order() {
   }, [highlightedItemId]);
 
   useEffect(() => {
-    async function loadDataCategories() {
-      await loadCategories();
+    async function loadInitial() {
+      await Promise.all([loadCategories(), loadExistingItems()]);
     }
-
-    loadDataCategories();
+    loadInitial();
   }, []);
 
   useEffect(() => {
@@ -68,6 +68,22 @@ export default function Order() {
       setSelectedCategory("");
     }
   }, [selectedCategory]);
+
+  async function loadExistingItems() {
+    try {
+      if (!order_id) return;
+      const response = await api.get(`/order/detail`, {
+        params: { order_id },
+      });
+      if (response.data?.items) {
+        setItems(response.data.items);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoadingExistingItems(false);
+    }
+  }
 
   async function loadCategories() {
     try {
@@ -187,7 +203,7 @@ export default function Order() {
     });
   }
 
-  if (loadingCategories) {
+  if (loadingCategories || loadingExistingItems) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.brand} />

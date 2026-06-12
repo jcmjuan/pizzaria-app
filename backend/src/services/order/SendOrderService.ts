@@ -26,7 +26,8 @@ class SendOrderService{
                 },
                 data:{
                     draft: false,
-                    name: name
+                    name: name,
+                    status: "PENDING",
                 },
                 select:{
                     id: true,

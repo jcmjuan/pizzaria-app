@@ -3,10 +3,13 @@ import prismaClient from "../../prisma";
 interface ListOrdersServiceProps {
   draft?: string;
   status?: string;
+  user_id?: string;
+  table?: number;
+  not_status?: string;
 }
 
 class ListOrdersService {
-  async execute({ draft, status }: ListOrdersServiceProps) {
+  async execute({ draft, status, user_id, table, not_status }: ListOrdersServiceProps) {
     const where: any = {};
 
     if (draft !== undefined) {
@@ -14,7 +17,20 @@ class ListOrdersService {
     }
 
     if (status !== undefined) {
-      where.status = status;
+      const statuses = status.split(",");
+      where.status = statuses.length === 1 ? statuses[0] : { in: statuses };
+    }
+
+    if (user_id !== undefined) {
+      where.user_id = user_id;
+    }
+
+    if (table !== undefined) {
+      where.table = table;
+    }
+
+    if (not_status !== undefined) {
+      where.status = { ...(where.status || {}), not: not_status };
     }
 
     const orders = await prismaClient.order.findMany({
@@ -28,12 +44,14 @@ class ListOrdersService {
         name: true,
         draft: true,
         status: true,
+        user_id: true,
         createdAt: true,
         updatedAt: true,
         items: {
           select: {
             id: true,
             amount: true,
+            status: true,
             product: {
               select: {
                 id: true,

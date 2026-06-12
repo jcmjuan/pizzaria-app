@@ -20,7 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Dashboard() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -42,6 +42,23 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
+
+      const activeResponse = await api.get<Order | null>(
+        `/order/active?table=${table}`
+      );
+
+      if (activeResponse.data) {
+        const activeOrder = activeResponse.data;
+        router.push({
+          pathname: "/(authenticated)/order",
+          params: {
+            table: table.toString(),
+            order_id: activeOrder.id,
+          },
+        });
+        setTableNumber("");
+        return;
+      }
 
       const response = await api.post<Order>("/order", {
         table: table,
@@ -77,6 +94,9 @@ export default function Dashboard() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
+            <View style={styles.userInfo}>
+              <Text style={styles.greeting}>Olá, {user?.name || "Garçom"}</Text>
+            </View>
             <TouchableOpacity style={styles.signoutButton} onPress={signOut}>
               <Text style={styles.signoutText}>Sair</Text>
             </TouchableOpacity>
@@ -100,6 +120,15 @@ export default function Dashboard() {
             />
 
             <Button title="Abrir mesa" onPress={handleOpenTable} />
+
+            <TouchableOpacity
+              style={styles.ordersLink}
+              onPress={() => router.push("/(authenticated)/orders-list")}
+            >
+              <Text style={styles.ordersLinkText}>
+                Acompanhar Pedidos →
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -120,9 +149,18 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  greeting: {
+    color: colors.primary,
+    fontSize: fontSize.lg,
+    fontWeight: "600",
   },
   signoutButton: {
     backgroundColor: colors.red,
@@ -159,5 +197,19 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: spacing.md,
+  },
+  ordersLink: {
+    marginTop: spacing.lg,
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    backgroundColor: colors.backgroundInput,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.brand,
+  },
+  ordersLinkText: {
+    color: colors.brand,
+    fontSize: fontSize.md,
+    fontWeight: "600",
   },
 });

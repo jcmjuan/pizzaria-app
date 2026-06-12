@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
-import { finishOrderAction } from "@/actions/orders";
+import { finishOrderAction, startOrderAction } from "@/actions/orders";
 import { useRouter } from "next/navigation";
 
 interface OrderModalProps {
@@ -64,6 +64,21 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
     }, 0);
   };
 
+  const handleStartOrder = async () => {
+    if (!orderId) return;
+
+    const result = await startOrderAction(orderId);
+
+    if (!result.success) {
+      console.log(result.error);
+    }
+
+    if (result.success) {
+      router.refresh();
+      onClose();
+    }
+  };
+
   const handleFinishOrder = async () => {
     if (!orderId) return;
 
@@ -82,12 +97,27 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
   const statusLabel = () => {
     if (!order) return { text: "", color: "" };
     switch (order.status) {
-      case "PRODUCTION":
+      case "PENDING":
+        return { text: "Novo", color: "bg-yellow-500/20 text-yellow-500" };
+      case "IN_PRODUCTION":
         return { text: "Em produção", color: "bg-orange-500/20 text-orange-500" };
       case "READY":
         return { text: "Pronto", color: "bg-green-500/20 text-green-500" };
+      case "SERVED":
+        return { text: "Servido", color: "bg-blue-500/20 text-blue-500" };
       case "CLOSED":
-        return { text: "Finalizado", color: "bg-blue-500/20 text-blue-500" };
+        return { text: "Finalizado", color: "bg-gray-500/20 text-gray-400" };
+    }
+  };
+
+  const itemStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING": return { text: "Novo", color: "text-yellow-400" };
+      case "IN_PRODUCTION": return { text: "Produção", color: "text-orange-400" };
+      case "READY": return { text: "Pronto", color: "text-green-400" };
+      case "SERVED": return { text: "Servido", color: "text-blue-400" };
+      case "CLOSED": return { text: "Fechado", color: "text-gray-400" };
+      default: return { text: status, color: "text-gray-400" };
     }
   };
 
@@ -108,9 +138,9 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
           </div>
         ) : order ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Nome da categoria</p>
+                <p className="text-sm text-gray-400 mb-1">Mesa</p>
                 <p className="text-lg font-semibold">Mesa {order.table}</p>
               </div>
               <div>
@@ -133,6 +163,7 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
                 {order.items && order.items.length > 0 ? (
                   order.items.map((item) => {
                     const subtotal = item.product.price * item.amount;
+                    const itemStatus = itemStatusLabel(item.status);
                     return (
                       <div
                         key={item.id}
@@ -140,9 +171,14 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-base mb-1">
-                              {item.product.name}
-                            </h4>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-base">
+                                {item.product.name}
+                              </h4>
+                              <span className={`text-[10px] font-medium ${itemStatus.color}`}>
+                                ({itemStatus.text})
+                              </span>
+                            </div>
                             <p className="text-sm text-gray-400">
                               {item.product.description}
                             </p>
@@ -152,10 +188,10 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
                           </div>
                           <div className="text-right ml-4">
                             <p className="text-sm text-gray-400 mb-1">
-                              Quantidade: {item.amount}
+                              Qtd: {item.amount}
                             </p>
                             <p className="font-semibold text-lg">
-                              Subtotal: {formatPrice(subtotal)}
+                              {formatPrice(subtotal)}
                             </p>
                           </div>
                         </div>
@@ -189,7 +225,16 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
           >
             Fechar
           </Button>
-          {order?.status === "PRODUCTION" && (
+          {order?.status === "PENDING" && (
+            <Button
+              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold"
+              disabled={loading}
+              onClick={handleStartOrder}
+            >
+              Iniciar Preparo
+            </Button>
+          )}
+          {order?.status === "IN_PRODUCTION" && (
             <Button
               className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
               disabled={loading}

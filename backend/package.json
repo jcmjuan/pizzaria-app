@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "npx prisma generate && tsc --noUnusedLocals false --noUnusedParameters false",
-    "start": "node dist/server.js"
+    "start": "npx prisma migrate deploy && node dist/server.js"
   },
   "keywords": [],
   "author": "",

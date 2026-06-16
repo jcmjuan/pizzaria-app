@@ -24,6 +24,8 @@ class DetailOrderService {
             id: true,
             amount: true,
             status: true,
+            order_id: true,
+            product_id: true,
             product: {
               select: {
                 id: true,

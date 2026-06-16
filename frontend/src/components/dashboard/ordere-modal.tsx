@@ -240,7 +240,7 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
               disabled={loading}
               onClick={handleFinishOrder}
             >
-              Finalizar (enviar p/ caixa)
+              Finalizar (Enviar p/ garçom)
             </Button>
           )}
         </DialogFooter>

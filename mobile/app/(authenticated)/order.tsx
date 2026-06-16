@@ -23,9 +23,10 @@ import { formatPrice } from "../../utils/format";
 export default function Order() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { order_id, table } = useLocalSearchParams<{
+  const { order_id, table, name } = useLocalSearchParams<{
     order_id: string;
     table: string;
+    name?: string;
   }>();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -42,6 +43,7 @@ export default function Order() {
   const [loadingExistingItems, setLoadingExistingItems] = useState(true);
 
   const [items, setItems] = useState<Item[]>([]);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(
     null
   );
@@ -77,6 +79,7 @@ export default function Order() {
       });
       if (response.data?.items) {
         setItems(response.data.items);
+        setOrderStatus(response.data.status);
       }
     } catch (err) {
       console.log(err);
@@ -137,8 +140,10 @@ export default function Order() {
       setHighlightedItemId(response.data.id);
       setSelectedProduct("");
       setQuantity(1);
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
+      const msg = err?.response?.data?.error || err?.message || "Erro ao adicionar item";
+      Alert.alert("Atenção", msg);
     } finally {
       setLoadingAddItem(false);
     }
@@ -187,8 +192,10 @@ export default function Order() {
       setItems((prev) =>
         prev.map((i) => (i.id === item_id ? response.data : i))
       );
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
+      const msg = err?.response?.data?.error || err?.message || "Erro ao atualizar item";
+      Alert.alert("Atenção", msg);
     }
   }
 
@@ -199,9 +206,11 @@ export default function Order() {
 
     router.push({
       pathname: "/(authenticated)/finish",
-      params: { order_id: order_id, table: table },
+      params: { order_id: order_id, table: table, name: name || "" },
     });
   }
+
+  const canEdit = orderStatus === null || orderStatus === "PENDING";
 
   if (loadingCategories || loadingExistingItems) {
     return (
@@ -227,78 +236,97 @@ export default function Order() {
         style={styles.scrollContent}
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       >
-        <View style={styles.addSection}>
-          <Select
-            label="Categorias"
-            placeholder="Selecione a categoria..."
-            options={categories.map((category) => ({
-              label: category.name,
-              value: category.id,
-            }))}
-            selectedValue={selectedCategory}
-            onValueChange={setSelectedCategory}
-          />
+        {!canEdit && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningText}>
+              Este pedido já está em produção ou foi concluído e não pode mais ser editado.
+            </Text>
+          </View>
+        )}
 
-          {loadingProducts ? (
-            <ActivityIndicator size="small" color={colors.brand} />
-          ) : (
-            selectedCategory && (
-              <Select
-                placeholder="Selecione um produto..."
-                options={products.map((product) => ({
-                  label: product.name,
-                  value: product.id,
-                }))}
-                selectedValue={selectedProduct}
-                onValueChange={setSelectedProduct}
-              />
-            )
-          )}
-
-          {selectedProduct && (
-            <View style={styles.quantitySection}>
-              <Text style={styles.quantityLabel}>Quantidade</Text>
-              <QuantityControl
-                quantity={quantity}
-                onIncrement={() => setQuantity((quantity) => quantity + 1)}
-                onDecrement={() => {
-                  if (quantity <= 1) {
-                    setQuantity(1);
-                    return;
-                  }
-
-                  setQuantity((quantity) => quantity - 1);
-                }}
-              />
-            </View>
-          )}
-
-          {selectedProduct && (
-            <Button
-              title="Adicionar"
-              onPress={handleAddItem}
-              loading={loadingAddItem}
+        {canEdit && (
+          <View style={styles.addSection}>
+            <Select
+              label="Categorias"
+              placeholder="Selecione a categoria..."
+              options={categories.map((category) => ({
+                label: category.name,
+                value: category.id,
+              }))}
+              selectedValue={selectedCategory}
+              onValueChange={setSelectedCategory}
             />
-          )}
-        </View>
 
-        {items.length > 0 && (
-          <View style={styles.itemsSection}>
-            <Text style={styles.itemsTitle}>Itens adicionados ({items.length})</Text>
-            {items.map((item) => (
-              <OrderItem
-                item={item}
-                key={item.id}
-                highlighted={item.id === highlightedItemId}
-                onRemove={handleRemoveItem}
-                onIncrement={(id) => handleUpdateItemQuantity(id, 1)}
-                onDecrement={(id) => handleUpdateItemQuantity(id, -1)}
+            {loadingProducts ? (
+              <ActivityIndicator size="small" color={colors.brand} />
+            ) : (
+              selectedCategory && (
+                <Select
+                  placeholder="Selecione um produto..."
+                  options={products.map((product) => ({
+                    label: product.name,
+                    value: product.id,
+                  }))}
+                  selectedValue={selectedProduct}
+                  onValueChange={setSelectedProduct}
+                />
+              )
+            )}
+
+            {selectedProduct && (
+              <View style={styles.quantitySection}>
+                <Text style={styles.quantityLabel}>Quantidade</Text>
+                <QuantityControl
+                  quantity={quantity}
+                  onIncrement={() => setQuantity((quantity) => quantity + 1)}
+                  onDecrement={() => {
+                    if (quantity <= 1) {
+                      setQuantity(1);
+                      return;
+                    }
+
+                    setQuantity((quantity) => quantity - 1);
+                  }}
+                />
+              </View>
+            )}
+
+            {selectedProduct && (
+              <Button
+                title="Adicionar"
+                onPress={handleAddItem}
+                loading={loadingAddItem}
               />
-            ))}
+            )}
           </View>
         )}
 
         {items.length > 0 && (
+          <View style={styles.itemsSection}>
+            <Text style={styles.itemsTitle}>Itens adicionados ({items.length})</Text>
+            {items.map((item) =>
+              canEdit ? (
+                <OrderItem
+                  item={item}
+                  key={item.id}
+                  highlighted={item.id === highlightedItemId}
+                  onRemove={handleRemoveItem}
+                  onIncrement={(id) => handleUpdateItemQuantity(id, 1)}
+                  onDecrement={(id) => handleUpdateItemQuantity(id, -1)}
+                />
+              ) : (
+                <View key={item.id} style={styles.readonlyItem}>
+                  <Text style={styles.productName}>{item.product?.name}</Text>
+                  <Text style={styles.productDetail}>
+                    {item.amount}x {formatPrice(item.product.price * item.amount)}
+                  </Text>
+                </View>
+              )
+            )}
+          </View>
+        )}
+
+        {items.length > 0 && canEdit && (
           <View style={styles.footer}>
             <View style={styles.summary}>
               <Text style={styles.summaryText}>
@@ -389,6 +417,36 @@ const styles = StyleSheet.create({
   footer: {
     paddingTop: spacing.lg,
     gap: spacing.md,
+  },
+  warningBanner: {
+    backgroundColor: "#FBBF2420",
+    borderRadius: 8,
+    padding: spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: "#FBBF24",
+    marginBottom: spacing.md,
+  },
+  warningText: {
+    color: "#FBBF24",
+    fontSize: fontSize.sm,
+  },
+  readonlyItem: {
+    backgroundColor: colors.backgroundInput,
+    borderRadius: 8,
+    padding: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+  },
+  productName: {
+    color: colors.primary,
+    fontSize: fontSize.md,
+  },
+  productDetail: {
+    color: colors.gray,
+    fontSize: fontSize.sm,
   },
   summary: {
     flexDirection: "row",

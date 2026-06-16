@@ -9,18 +9,24 @@ interface ItemProps {
 class AddItemOrderService {
   async execute({ amount, order_id, product_id }: ItemProps) {
     const orderExists = await prismaClient.order.findFirst({
-      where: { id: order_id }
+      where: { id: order_id },
+      select: { id: true, status: true }
     });
 
     if (!orderExists) {
       throw new Error("Order não encontrado");
     }
 
+    if (orderExists.status !== "PENDING") {
+      throw new Error("Não é possível adicionar itens a um pedido cujo preparo já foi iniciado ou concluído");
+    }
+
     const productExists = await prismaClient.product.findFirst({
       where: {
         id: product_id,
         disabled: false,
-      }
+      },
+      select: { id: true }
     });
 
     if (!productExists) {
@@ -31,7 +37,8 @@ class AddItemOrderService {
       where: {
         order_id: order_id,
         product_id: product_id,
-      }
+      },
+      select: { id: true, amount: true }
     });
 
     if (existingItem) {

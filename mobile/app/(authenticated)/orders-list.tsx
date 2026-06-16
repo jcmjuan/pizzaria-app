@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatPrice } from "../../utils/format";
 
-type TabType = "production" | "ready" | "served";
+type TabType = "pending" | "production" | "ready" | "served";
 
 export default function OrdersList() {
   const { user } = useAuth();
@@ -38,7 +38,7 @@ export default function OrdersList() {
       });
 
       const filtered = response.data.filter(
-        (o) => o.status !== "CLOSED" && o.status !== "PENDING"
+        (o) => o.status !== "CLOSED"
       );
 
       const currentReadyIds = new Set(
@@ -79,6 +79,7 @@ export default function OrdersList() {
   }, []);
 
   const filteredOrders = orders.filter((o) => {
+    if (activeTab === "pending") return o.status === "PENDING";
     if (activeTab === "production") return o.status === "IN_PRODUCTION";
     if (activeTab === "ready") return o.status === "READY";
     return o.status === "SERVED";
@@ -104,11 +105,13 @@ export default function OrdersList() {
       params: {
         table: order.table.toString(),
         order_id: order.id,
+        name: order.name || "",
       },
     });
   };
 
   const tabs: { key: TabType; label: string; color: string }[] = [
+    { key: "pending", label: "Enviados", color: "#FBBF24" },
     { key: "production", label: "Em Produção", color: colors.brand },
     { key: "ready", label: "Pronto", color: colors.green },
     { key: "served", label: "Servidos", color: "#3B82F6" },
@@ -171,7 +174,9 @@ export default function OrdersList() {
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>Mesa {order.table}</Text>
                 <Text style={styles.cardStatus}>
-                  {order.status === "IN_PRODUCTION"
+                  {order.status === "PENDING"
+                    ? "Enviado"
+                    : order.status === "IN_PRODUCTION"
                     ? "Em produção"
                     : order.status === "READY"
                     ? "Pronto"
@@ -208,7 +213,7 @@ export default function OrdersList() {
                     onPress={() => handleServe(order.id)}
                   />
                 )}
-                {order.status !== "SERVED" && (
+                {order.status === "PENDING" && (
                   <TouchableOpacity
                     style={styles.addMoreButton}
                     onPress={() => handleAddMoreItems(order)}

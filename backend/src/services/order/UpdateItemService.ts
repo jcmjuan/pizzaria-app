@@ -1,4 +1,5 @@
 import prismaClient from "../../prisma/index"
+import { recalculateOrderStatus } from "./RecalculateOrderStatus";
 
 interface UpdateItemProps {
   item_id: string;
@@ -8,17 +9,28 @@ interface UpdateItemProps {
 class UpdateItemService {
   async execute({ item_id, amount }: UpdateItemProps) {
     const item = await prismaClient.item.findFirst({
-      where: { id: item_id }
+      where: { id: item_id },
+      include: {
+        order: {
+          select: { status: true }
+        }
+      }
     });
 
     if (!item) {
       throw new Error("Item não encontrado");
     }
 
+    if (item.order.status !== "PENDING") {
+      throw new Error("Não é possível alterar itens de um pedido cujo preparo já foi iniciado ou concluído");
+    }
+
     if (amount <= 0) {
       await prismaClient.item.delete({
         where: { id: item_id }
       });
+
+      await recalculateOrderStatus(item.order_id);
 
       return { message: "Item removido" };
     }

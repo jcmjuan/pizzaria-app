@@ -15,12 +15,13 @@ import {
 
 export default function Finish() {
   const router = useRouter();
-  const { order_id, table } = useLocalSearchParams<{
+  const { order_id, table, name } = useLocalSearchParams<{
     order_id: string;
     table: string;
+    name?: string;
   }>();
 
-  const [customer, setCustomer] = useState("");
+  const [customer, setCustomer] = useState(name || "");
   const [loading, setLoading] = useState(false);
 
   async function handleFinishOrder() {

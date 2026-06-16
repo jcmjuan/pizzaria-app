@@ -14,7 +14,6 @@ class ActiveOrderController {
 
         const orders = await listOrders.execute({
             table: Number(table),
-            draft: "false",
             not_status: "CLOSED",
         });
 

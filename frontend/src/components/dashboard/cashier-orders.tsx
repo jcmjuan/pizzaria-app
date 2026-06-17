@@ -18,7 +18,7 @@ interface CashierOrdersProps {
 export function CashierOrders({ token }: CashierOrdersProps) {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<null | string>(null);
+  const [selectedTableOrders, setSelectedTableOrders] = useState<Order[] | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -48,6 +48,21 @@ export function CashierOrders({ token }: CashierOrdersProps) {
     if (!order.items) return 0;
     return order.items.reduce((total, item) => {
       return total + item.product.price * item.amount;
+    }, 0);
+  };
+
+  const groupedByTable = orders.reduce((acc, order) => {
+    const tableKey = order.table;
+    if (!acc[tableKey]) {
+      acc[tableKey] = [];
+    }
+    acc[tableKey].push(order);
+    return acc;
+  }, {} as Record<number, Order[]>);
+
+  const calculateTableTotal = (tableOrders: Order[]) => {
+    return tableOrders.reduce((total, order) => {
+      return total + calculateOrderTotal(order);
     }, 0);
   };
 
@@ -81,65 +96,61 @@ export function CashierOrders({ token }: CashierOrdersProps) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {orders.map((order) => (
-            <Card
-              key={order.id}
-              className="bg-app-card border-app-border text-white"
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-lg lg:text-xl font-bold">
-                    Mesa {order.table}
-                  </CardTitle>
-                  <Badge variant="default" className="bg-blue-500/20 text-blue-500 text-xs select-none">
-                    servido
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-3 sm:space-y-4 mt-auto">
-                <div>
-                  {order.items && order.items.length > 0 && (
-                    <div className="space-y-1">
-                      {order.items.slice(0, 2).map((item) => (
-                        <p
-                          key={item.id}
-                          className="text-xs sm:text-sm text-gray-300 truncate"
-                        >
-                          • {item.amount}x {item.product.name}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col xl:flex-row items-center justify-between pt-4 border-t border-app-border gap-3">
-                  <div className="self-start">
-                    <p className="text-sm md:text-base text-gray-400">Total</p>
-                    <p className="text-base font-bold text-brand-primary">
-                      {formatPrice(calculateOrderTotal(order))}
-                    </p>
+          {Object.entries(groupedByTable)
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([tableNum, tableOrders]) => (
+              <Card
+                key={tableNum}
+                className="bg-app-card border-app-border text-white"
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-lg lg:text-xl font-bold">
+                      Mesa {tableNum}
+                    </CardTitle>
+                    <Badge variant="default" className="bg-yellow-500/20 text-yellow-500 text-xs">
+                      {tableOrders.length} pedido{tableOrders.length > 1 ? 's' : ''}
+                    </Badge>
                   </div>
+                </CardHeader>
 
-                  <Button
-                    size="sm"
-                    className="bg-brand-primary hover:bg-brand-primary w-full xl:w-auto"
-                    onClick={() => setSelectedOrder(order.id)}
-                  >
-                    <EyeIcon className="w-5 h-5" />
-                    Cobrar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent className="space-y-3 mt-auto">
+                  {tableOrders.map(order => (
+                    <div key={order.id} className="bg-app-background rounded p-2 border border-app-border">
+                      <p className="text-xs text-gray-400">
+                        Pedido {order.id.slice(0, 8)} — {order.items?.length || 0} itens
+                      </p>
+                    </div>
+                  ))}
+
+                  <div className="flex flex-col items-end justify-between pt-4 border-t border-app-border gap-3">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-400">Total</p>
+                      <p className="text-base font-bold text-brand-primary">
+                        {formatPrice(calculateTableTotal(tableOrders))}
+                      </p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      className="bg-brand-primary hover:bg-brand-primary"
+                      onClick={() => setSelectedTableOrders(tableOrders)}
+                    >
+                      <EyeIcon className="w-5 h-5" />
+                      Cobrar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          }
         </div>
       )}
 
       <CashierModal
-        orderId={selectedOrder}
+        orders={selectedTableOrders}
         onClose={async () => {
-          setSelectedOrder(null);
+          setSelectedTableOrders(null);
           await fetchOrders();
         }}
         token={token}

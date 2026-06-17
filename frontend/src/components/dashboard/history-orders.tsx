@@ -22,7 +22,7 @@ export function HistoryOrders({ token }: HistoryOrdersProps) {
 
   const fetchOrders = async () => {
     try {
-      const response = await apiClient<Order[]>("/orders?draft=false&status=CLOSED", {
+      const response = await apiClient<Order[]>("/orders?draft=false&status=CLOSED,CANCELED", {
         method: "GET",
         cache: "no-store",
         token: token,
@@ -57,7 +57,7 @@ export function HistoryOrders({ token }: HistoryOrdersProps) {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Histórico</h1>
           <p className="text-sm sm:text-base mt-1">
-            Pedidos finalizados e encerrados
+            Pedidos finalizados, cancelados e encerrados
           </p>
         </div>
 
@@ -91,8 +91,8 @@ export function HistoryOrders({ token }: HistoryOrdersProps) {
                   <CardTitle className="text-lg lg:text-xl font-bold">
                     Mesa {order.table}
                   </CardTitle>
-                  <Badge variant="default" className="bg-blue-500/20 text-blue-500 text-xs select-none">
-                    finalizado
+                  <Badge variant="default" className={`text-xs select-none ${order.status === "CANCELED" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"}`}>
+                    {order.status === "CANCELED" ? "cancelado" : "finalizado"}
                   </Badge>
                 </div>
               </CardHeader>

@@ -89,8 +89,8 @@ export function HistoryModal({ onClose, orderId, token }: HistoryModalProps) {
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">Status</p>
-                <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-500 rounded-full font-medium text-xs">
-                  Finalizado
+                <span className={`inline-block px-3 py-1 rounded-full font-medium text-xs ${order.status === "CANCELED" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"}`}>
+                  {order.status === "CANCELED" ? "Cancelado" : "Finalizado"}
                 </span>
               </div>
             </div>

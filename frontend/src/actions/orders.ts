@@ -74,8 +74,10 @@ export async function startOrderAction(orderId: string, itemIds?: string[]) {
   }
 }
 
-export async function closeOrderAction(orderId: string) {
-  if (!orderId) {
+export async function closeOrderAction(orderIds: string | string[]) {
+  const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
+
+  if (ids.length === 0) {
     return { success: false, error: "Falha ao encerrar o pedido" };
   }
 
@@ -86,15 +88,19 @@ export async function closeOrderAction(orderId: string) {
       return { success: false, error: "Falha ao encerrar o pedido" };
     }
 
-    const data = {
-      order_id: orderId,
-    };
-
-    await apiClient("/order/close", {
-      method: "PUT",
-      body: JSON.stringify(data),
-      token: token,
-    });
+    if (ids.length === 1) {
+      await apiClient("/order/close", {
+        method: "PUT",
+        body: JSON.stringify({ order_id: ids[0] }),
+        token: token,
+      });
+    } else {
+      await apiClient("/order/close", {
+        method: "PUT",
+        body: JSON.stringify({ order_ids: ids }),
+        token: token,
+      });
+    }
 
     revalidatePath("/dashboard/cashier");
 
@@ -102,5 +108,36 @@ export async function closeOrderAction(orderId: string) {
   } catch (err) {
     console.log(err);
     return { success: false, error: "Falha ao encerrar o pedido" };
+  }
+}
+
+export async function cancelOrderAction(orderId: string) {
+  if (!orderId) {
+    return { success: false, error: "Falha ao cancelar o pedido" };
+  }
+
+  try {
+    const token = await getToken();
+
+    if (!token) {
+      return { success: false, error: "Falha ao cancelar o pedido" };
+    }
+
+    const data = {
+      order_id: orderId,
+    };
+
+    await apiClient("/order/cancel", {
+      method: "PUT",
+      body: JSON.stringify(data),
+      token: token,
+    });
+
+    revalidatePath("/dashboard");
+
+    return { success: true, error: "" };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: "Falha ao cancelar o pedido" };
   }
 }

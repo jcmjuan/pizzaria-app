@@ -4,7 +4,7 @@ import uploadConfig from './config/multer'
 import { validateSchema } from './middlewares/validateSchema';
 import { createCategorySchema, updateCategorySchema } from './schemas/categorySchema';
 import { createUserSchema, authUserSchema } from './schemas/userSchema';
-import { createOrderSchema, addItemSchema, removeItemSchema, detailOrderSchema, sendOrderSchema, finishOrderSchema, closeOrderSchema, deleteOrderSchema, updateItemSchema, startOrderSchema, serveOrderSchema, activeOrderSchema } from './schemas/orderSchema';
+import { createOrderSchema, addItemSchema, removeItemSchema, detailOrderSchema, sendOrderSchema, finishOrderSchema, closeOrderSchema, deleteOrderSchema, updateItemSchema, startOrderSchema, serveOrderSchema, activeOrderSchema, cancelOrderSchema, tableOrdersSchema } from './schemas/orderSchema';
 import { createProductSchema, listProductSchema, listProductByCategorySchema, updateProductSchema } from './schemas/productSchema';
 import { CreateUserController } from './controllers/user/createUserController';
 import { AuthUserController } from './controllers/user/AuthUserController'
@@ -31,6 +31,8 @@ import { CloseOrderController } from './controllers/order/CloseOrderController';
 import { StartOrderController } from './controllers/order/StartOrderController';
 import { ServeOrderController } from './controllers/order/ServeOrderController';
 import { ActiveOrderController } from './controllers/order/ActiveOrderController';
+import { CancelOrderController } from './controllers/order/CancelOrderController';
+import { TableOrdersController } from './controllers/order/TableOrdersController';
 import { isAuthenticated } from './middlewares/isAuthenticated';
 import { isAdmin } from './middlewares/isAdmin';
 
@@ -170,6 +172,13 @@ router.delete(
 )
 
 router.put(
+  "/order/cancel",
+  isAuthenticated,
+  validateSchema(cancelOrderSchema),
+  new CancelOrderController().handle
+)
+
+router.put(
   "/order/send",
   isAuthenticated,
   validateSchema(sendOrderSchema),
@@ -216,6 +225,13 @@ router.get(
   isAuthenticated,
   validateSchema(activeOrderSchema),
   new ActiveOrderController().handle
+)
+
+router.get(
+  "/order/table-orders",
+  isAuthenticated,
+  validateSchema(tableOrdersSchema),
+  new TableOrdersController().handle
 )
 
 

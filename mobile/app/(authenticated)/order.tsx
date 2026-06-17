@@ -210,6 +210,22 @@ export default function Order() {
     });
   }
 
+  async function handleCreateNewOrder() {
+    try {
+      const response = await api.post<Order>("/order", { table: Number(table) });
+      router.push({
+        pathname: "/(authenticated)/order",
+        params: {
+          table: table,
+          order_id: response.data.id,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Erro", "Falha ao criar novo pedido");
+    }
+  }
+
   const canEdit = orderStatus === null || orderStatus === "PENDING";
 
   if (loadingCategories || loadingExistingItems) {
@@ -237,11 +253,17 @@ export default function Order() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       >
         {!canEdit && (
-          <View style={styles.warningBanner}>
-            <Text style={styles.warningText}>
-              Este pedido já está em produção ou foi concluído e não pode mais ser editado.
-            </Text>
-          </View>
+          <>
+            <View style={styles.warningBanner}>
+              <Text style={styles.warningText}>
+                Este pedido já está em produção. Crie um novo pedido para adicionar mais itens.
+              </Text>
+            </View>
+            <Button
+              title={`Novo pedido para Mesa ${table}`}
+              onPress={handleCreateNewOrder}
+            />
+          </>
         )}
 
         {canEdit && (

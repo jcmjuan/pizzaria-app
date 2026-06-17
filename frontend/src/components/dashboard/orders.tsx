@@ -155,6 +155,11 @@ export function Orders({ token }: OrdersProps) {
               {getItemStatusCount(order, "READY")} pronto
             </Badge>
           )}
+          {getItemStatusCount(order, "CANCELED") > 0 && (
+            <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">
+              {getItemStatusCount(order, "CANCELED")} cancelado
+            </Badge>
+          )}
         </div>
 
         <div className="flex flex-col xl:flex-row items-center justify-between pt-4 border-t border-app-border gap-3">

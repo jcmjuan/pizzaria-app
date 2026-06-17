@@ -56,8 +56,14 @@ export const finishOrderSchema = z.object({
 
 export const closeOrderSchema = z.object({
   body: z.object({
-    order_id: z.string({ message: "ID do pedido precisa ser uma string"}),
-  })
+    order_id: z.string({ message: "ID do pedido precisa ser uma string" }).optional(),
+    order_ids: z.array(z.string({ message: "ID do pedido precisa ser uma string" }))
+      .min(1, "Pelo menos um pedido deve ser informado")
+      .optional(),
+  }).refine(
+    (data) => data.order_id || data.order_ids,
+    { message: "Informe order_id ou order_ids" }
+  ),
 })
 
 export const deleteOrderSchema = z.object({
@@ -90,6 +96,19 @@ export const serveOrderSchema = z.object({
 })
 
 export const activeOrderSchema = z.object({
+  query: z.object({
+    table: z.string({ message: "O número da mesa é obrigatório" }),
+  }),
+})
+
+export const cancelOrderSchema = z.object({
+  body: z.object({
+    order_id: z.string({ message: "ID do pedido precisa ser uma string" }),
+    cancelReason: z.string().optional(),
+  }),
+})
+
+export const tableOrdersSchema = z.object({
   query: z.object({
     table: z.string({ message: "O número da mesa é obrigatório" }),
   }),

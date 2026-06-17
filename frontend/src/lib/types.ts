@@ -39,7 +39,7 @@ export interface Product {
 export interface Items {
   id: string;
   amount: number;
-  status: "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED";
+  status: "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED" | "CANCELED";
   product: {
     id: string;
     name: string;
@@ -53,7 +53,7 @@ export interface Order {
   id: string;
   table: number;
   name?: string;
-  status: "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED";
+  status: "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED" | "CANCELED";
   draft: boolean;
   createdAt: string;
   updatedAt?: string;

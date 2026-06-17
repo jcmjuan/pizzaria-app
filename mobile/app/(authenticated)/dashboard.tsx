@@ -43,34 +43,32 @@ export default function Dashboard() {
     try {
       setLoading(true);
 
-      const activeResponse = await api.get<Order | null>(
-        `/order/active?table=${table}`
+      const response = await api.get<Order[]>(
+        `/order/table-orders?table=${table}`
       );
 
-      if (activeResponse.data) {
-        const activeOrder = activeResponse.data;
+      const activeOrders = response.data;
+
+      if (activeOrders.length === 0) {
+        const newOrder = await api.post<Order>("/order", {
+          table: table,
+        });
+
         router.push({
           pathname: "/(authenticated)/order",
           params: {
             table: table.toString(),
-            order_id: activeOrder.id,
+            order_id: newOrder.data.id,
           },
         });
-        setTableNumber("");
-        return;
+      } else {
+        router.push({
+          pathname: "/(authenticated)/table-summary",
+          params: {
+            table: table.toString(),
+          },
+        });
       }
-
-      const response = await api.post<Order>("/order", {
-        table: table,
-      });
-
-      router.push({
-        pathname: "/(authenticated)/order",
-        params: {
-          table: response.data.table.toString(),
-          order_id: response.data.id,
-        },
-      });
 
       setTableNumber("");
     } catch (err) {

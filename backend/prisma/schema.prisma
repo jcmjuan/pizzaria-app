@@ -25,6 +25,7 @@ enum OrderStatus {
   READY
   SERVED
   CLOSED
+  CANCELED
 }
 
 model User {
@@ -72,6 +73,7 @@ model Order{
   status OrderStatus @default(PENDING)
   draft Boolean @default(true)
   name String?
+  cancelReason String?
   user_id String
   user User @relation(fields:[user_id], references:[id])
   items Item[]

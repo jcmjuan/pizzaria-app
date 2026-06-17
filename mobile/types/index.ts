@@ -32,7 +32,7 @@ export interface Product {
   category?: Category;
 }
 
-export type OrderStatus = "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED";
+export type OrderStatus = "PENDING" | "IN_PRODUCTION" | "READY" | "SERVED" | "CLOSED" | "CANCELED";
 
 export interface Order {
   id: string;

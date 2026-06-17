@@ -14,60 +14,48 @@ import { closeOrderAction } from "@/actions/orders";
 import { useRouter } from "next/navigation";
 
 interface CashierModalProps {
-  orderId: string | null;
+  orders: Order[] | null;
   onClose: () => Promise<void>;
   token: string;
 }
 
-export function CashierModal({ onClose, orderId, token }: CashierModalProps) {
-  const [order, setOrder] = useState<Order | null>(null);
+export function CashierModal({ onClose, orders, token }: CashierModalProps) {
+  const [detailedOrders, setDetailedOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const fetchOrder = async () => {
-    if (!orderId) {
-      setOrder(null);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await apiClient<Order>(
-        `/order/detail?order_id=${orderId}`,
-        {
-          method: "GET",
-          token: token,
-        }
-      );
-
-      setOrder(response);
-      setLoading(false);
-    } catch (err) {
-      setLoading(false);
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
-    if (orderId) {
-      fetchOrder();
+    if (orders && orders.length > 0) {
+      setLoading(true);
+      Promise.all(
+        orders.map(o =>
+          apiClient<Order>(`/order/detail?order_id=${o.id}`, {
+            method: "GET",
+            token: token,
+          })
+        )
+      )
+        .then(setDetailedOrders)
+        .catch(console.log)
+        .finally(() => setLoading(false));
     } else {
-      setOrder(null);
+      setDetailedOrders([]);
     }
-  }, [orderId]);
+  }, [orders]);
 
   const calculateTotal = () => {
-    if (!order?.items) return 0;
-    return order.items.reduce((total, item) => {
-      return total + item.product.price * item.amount;
+    return detailedOrders.reduce((total, order) => {
+      return total + (order.items?.reduce((itemTotal, item) => {
+        return itemTotal + item.product.price * item.amount;
+      }, 0) || 0);
     }, 0);
   };
 
   const handleCloseOrder = async () => {
-    if (!orderId) return;
+    if (!orders || orders.length === 0) return;
 
-    const result = await closeOrderAction(orderId);
+    const orderIds = orders.map(o => o.id);
+    const result = await closeOrderAction(orderIds);
 
     if (!result.success) {
       console.log(result.error);
@@ -81,11 +69,11 @@ export function CashierModal({ onClose, orderId, token }: CashierModalProps) {
   };
 
   return (
-    <Dialog open={orderId !== null} onOpenChange={() => onClose()}>
+    <Dialog open={orders !== null} onOpenChange={() => onClose()}>
       <DialogContent className="p-6 bg-app-card text-white max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Cobrança do pedido
+            Cobrança da mesa
           </DialogTitle>
         </DialogHeader>
 
@@ -93,55 +81,58 @@ export function CashierModal({ onClose, orderId, token }: CashierModalProps) {
           <div className="flex items-center justify-center py-8">
             <p className="text-gray-400">Carregando...</p>
           </div>
-        ) : order ? (
+        ) : detailedOrders.length > 0 ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Mesa</p>
-                <p className="text-lg font-semibold">Mesa {order.table}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Cliente</p>
-                <p className="text-lg font-semibold">
-                  {order.name || "Sem nome"}
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Mesa</p>
+              <p className="text-lg font-semibold">Mesa {detailedOrders[0].table}</p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Itens do pedido</h3>
-              <div className="space-y-3">
-                {order.items && order.items.length > 0 ? (
-                  order.items.map((item) => {
-                    const subtotal = item.product.price * item.amount;
-                    return (
-                      <div
-                        key={item.id}
-                        className="bg-app-background rounded-lg p-4 border border-app-border"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-base mb-1">
-                              {item.product.name}
-                            </h4>
-                            <p className="text-sm text-gray-400">
-                              {formatPrice(item.product.price)} x {item.amount}
-                            </p>
-                          </div>
-                          <div className="text-right ml-4">
-                            <p className="font-semibold text-lg">
-                              {formatPrice(subtotal)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-gray-400 text-center py-4">
-                    Nenhum item no pedido
-                  </p>
-                )}
+              <h3 className="text-lg font-semibold mb-3">
+                {detailedOrders.length} pedido{detailedOrders.length > 1 ? 's' : ''}
+              </h3>
+              <div className="space-y-4">
+                {detailedOrders.map(order => (
+                  <div key={order.id}>
+                    <h4 className="text-sm text-gray-400 mb-2">
+                      Pedido {order.id.slice(0, 8)} — {order.name || "Sem nome"}
+                    </h4>
+                    <div className="space-y-3">
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item) => {
+                          const subtotal = item.product.price * item.amount;
+                          return (
+                            <div
+                              key={item.id}
+                              className="bg-app-background rounded-lg p-4 border border-app-border"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-base mb-1">
+                                    {item.product.name}
+                                  </h4>
+                                  <p className="text-sm text-gray-400">
+                                    {formatPrice(item.product.price)} x {item.amount}
+                                  </p>
+                                </div>
+                                <div className="text-right ml-4">
+                                  <p className="font-semibold text-lg">
+                                    {formatPrice(subtotal)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">
+                          Nenhum item no pedido
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
-import { finishOrderAction, startOrderAction } from "@/actions/orders";
+import { finishOrderAction, startOrderAction, cancelOrderAction } from "@/actions/orders";
 import { useRouter } from "next/navigation";
 
 interface OrderModalProps {
@@ -94,6 +94,24 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!orderId) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja cancelar este pedido?");
+    if (!confirmed) return;
+
+    const result = await cancelOrderAction(orderId);
+
+    if (!result.success) {
+      console.log(result.error);
+    }
+
+    if (result.success) {
+      router.refresh();
+      onClose();
+    }
+  };
+
   const statusLabel = () => {
     if (!order) return { text: "", color: "" };
     switch (order.status) {
@@ -107,6 +125,8 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
         return { text: "Servido", color: "bg-blue-500/20 text-blue-500" };
       case "CLOSED":
         return { text: "Finalizado", color: "bg-gray-500/20 text-gray-400" };
+      case "CANCELED":
+        return { text: "Cancelado", color: "bg-red-500/20 text-red-500" };
     }
   };
 
@@ -117,6 +137,7 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
       case "READY": return { text: "Pronto", color: "text-green-400" };
       case "SERVED": return { text: "Servido", color: "text-blue-400" };
       case "CLOSED": return { text: "Fechado", color: "text-gray-400" };
+      case "CANCELED": return { text: "Cancelado", color: "text-red-400" };
       default: return { text: status, color: "text-gray-400" };
     }
   };
@@ -225,6 +246,15 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
           >
             Fechar
           </Button>
+          {(order?.status === "PENDING" || order?.status === "IN_PRODUCTION") && (
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+              disabled={loading}
+              onClick={handleCancelOrder}
+            >
+              Cancelar Pedido
+            </Button>
+          )}
           {order?.status === "PENDING" && (
             <Button
               className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold"

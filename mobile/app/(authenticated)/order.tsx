@@ -218,6 +218,7 @@ export default function Order() {
         params: {
           table: table,
           order_id: response.data.id,
+          name: name || "",
         },
       });
     } catch (err) {

@@ -48,7 +48,7 @@ export default function TableSummary() {
       const response = await api.post<Order>("/order", { table: Number(table) });
       router.push({
         pathname: "/(authenticated)/order",
-        params: { table: table, order_id: response.data.id },
+        params: { table: table, order_id: response.data.id, name: existingName },
       });
     } catch (err) {
       console.log(err);
@@ -61,7 +61,7 @@ export default function TableSummary() {
   function handleAddToOrder(orderId: string) {
     router.push({
       pathname: "/(authenticated)/order",
-      params: { table: table, order_id: orderId },
+      params: { table: table, order_id: orderId, name: existingName },
     });
   }
 
@@ -79,6 +79,7 @@ export default function TableSummary() {
   );
 
   const draftOrder = orders.find((o) => o.draft && o.status === "PENDING");
+  const existingName = orders.find((o) => o.name)?.name || "";
 
   function getStatusLabel(status: string) {
     switch (status) {

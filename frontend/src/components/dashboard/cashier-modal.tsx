@@ -73,7 +73,7 @@ export function CashierModal({ onClose, orders, token }: CashierModalProps) {
       <DialogContent className="p-6 bg-app-card text-white max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Cobrança da mesa
+            Fechamento da mesa
           </DialogTitle>
         </DialogHeader>
 
@@ -160,7 +160,7 @@ export function CashierModal({ onClose, orders, token }: CashierModalProps) {
             disabled={loading}
             onClick={handleCloseOrder}
           >
-            Cobrar e encerrar
+            Receber pagamento
           </Button>
         </DialogFooter>
       </DialogContent>

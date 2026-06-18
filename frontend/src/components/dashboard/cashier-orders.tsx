@@ -72,7 +72,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Caixa</h1>
           <p className="text-sm sm:text-base mt-1">
-            Pedidos servidos prontos para cobrança
+            Pedidos servidos. Prontos para fechamento da conta.
           </p>
         </div>
 
@@ -91,7 +91,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
       ) : orders.length === 0 ? (
         <div>
           <p className="text-center text-gray-300">
-            Nenhum pedido servido para cobrança.
+            Nenhum pedido servido para fechamento da mesa.
           </p>
         </div>
       ) : (
@@ -137,7 +137,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
                       onClick={() => setSelectedTableOrders(tableOrders)}
                     >
                       <EyeIcon className="w-5 h-5" />
-                      Cobrar
+                      Fechar mesa
                     </Button>
                   </div>
                 </CardContent>

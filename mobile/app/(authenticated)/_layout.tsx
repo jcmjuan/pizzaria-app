@@ -47,6 +47,13 @@ export default function AuthenticatedLayout() {
           headerTitle: "Meus Pedidos",
         }}
       />
+      <Stack.Screen
+        name="table-summary"
+        options={{
+          headerShown: true,
+          headerTitle: "Pedidos da Mesa",
+        }}
+      />
     </Stack>
   );
 }

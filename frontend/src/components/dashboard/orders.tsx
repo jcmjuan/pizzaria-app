@@ -23,12 +23,26 @@ export function Orders({ token }: OrdersProps) {
   const prevPendingCount = useRef(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
+  useEffect(() => {
+    function initAudio() {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+      document.removeEventListener("click", initAudio);
+    }
+    document.addEventListener("click", initAudio);
+    return () => document.removeEventListener("click", initAudio);
+  }, []);
+
   function playBeep() {
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new AudioContext();
       }
       const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
       for (let i = 0; i < 3; i++) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -60,7 +74,7 @@ export function Orders({ token }: OrdersProps) {
         }),
       ]);
 
-      if (pending.length > prevPendingCount.current && prevPendingCount.current > 0) {
+      if (pending.length > prevPendingCount.current) {
         playBeep();
       }
       prevPendingCount.current = pending.length;

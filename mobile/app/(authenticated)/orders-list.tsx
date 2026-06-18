@@ -38,7 +38,7 @@ export default function OrdersList() {
       });
 
       const filtered = response.data.filter(
-        (o) => o.status !== "CLOSED"
+        (o) => o.status !== "CLOSED" && o.status !== "CANCELED"
       );
 
       const currentReadyIds = new Set(

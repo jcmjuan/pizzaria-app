@@ -14,7 +14,7 @@ class ActiveOrderController {
 
         const orders = await listOrders.execute({
             table: Number(table),
-            not_status: "CLOSED",
+            not_status: ["CLOSED", "CANCELED"],
         });
 
         if (orders.length === 0) {

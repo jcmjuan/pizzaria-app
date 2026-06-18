@@ -91,6 +91,8 @@ export default function TableSummary() {
         return "Pronto";
       case "SERVED":
         return "Servido";
+      case "CANCELED":
+        return "Cancelado";
       default:
         return status;
     }
@@ -106,6 +108,8 @@ export default function TableSummary() {
         return "#10B981";
       case "SERVED":
         return "#8B5CF6";
+      case "CANCELED":
+        return "#EF4444";
       default:
         return colors.gray;
     }

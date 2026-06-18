@@ -7,8 +7,8 @@
 // (obtido com `ipconfig` no Windows ou `ifconfig` no Linux/Mac).
 // O celular precisa estar na mesma rede Wi-Fi.
 export const API_CONFIG = {
-  BASE_URL: "https://pizzaria-app-cz97.onrender.com",
-  TIMEOUT: 12000, // 12 segundos
+  BASE_URL: "http://10.0.0.109:3001",
+  TIMEOUT: 50000, // 50 segundos
 };
 
 

@@ -14,7 +14,7 @@ class TableOrdersController {
 
     const orders = await listOrders.execute({
       table: Number(table),
-      not_status: "CLOSED",
+      not_status: ["CLOSED", "CANCELED"],
     });
 
     res.json(orders);

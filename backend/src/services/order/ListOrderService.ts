@@ -5,7 +5,7 @@ interface ListOrdersServiceProps {
   status?: string;
   user_id?: string;
   table?: number;
-  not_status?: string;
+  not_status?: string | string[];
 }
 
 class ListOrdersService {
@@ -30,7 +30,8 @@ class ListOrdersService {
     }
 
     if (not_status !== undefined) {
-      where.status = { ...(where.status || {}), not: not_status };
+      const excluded = Array.isArray(not_status) ? not_status : [not_status];
+      where.status = { ...(where.status || {}), not: excluded.length === 1 ? excluded[0] : { in: excluded } };
     }
 
     const orders = await prismaClient.order.findMany({

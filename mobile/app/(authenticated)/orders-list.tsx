@@ -5,7 +5,7 @@ import api from "@/services/api";
 import { Order } from "@/types";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -29,7 +29,6 @@ export default function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [servingOrderId, setServingOrderId] = useState<string | null>(null);
-  const prevReadyIds = useRef<Set<string>>(new Set());
 
   const fetchOrders = async () => {
     try {
@@ -40,29 +39,6 @@ export default function OrdersList() {
       const filtered = response.data.filter(
         (o) => o.status !== "CLOSED" && o.status !== "CANCELED"
       );
-
-      const currentReadyIds = new Set(
-        filtered.filter((o) => o.status === "READY").map((o) => o.id)
-      );
-
-      if (prevReadyIds.current.size > 0) {
-        const newReady = [...currentReadyIds].filter(
-          (id) => !prevReadyIds.current.has(id)
-        );
-        if (newReady.length > 0) {
-          const newReadyOrders = filtered.filter(
-            (o) => newReady.includes(o.id) && o.name
-          );
-          const name = newReadyOrders[0]?.name
-            ? `Mesa ${newReadyOrders[0]?.table}`
-            : "";
-          Alert.alert(
-            "Pedido Pronto! 🍕",
-            `O pedido da mesa ${newReadyOrders[0]?.table || ""} está pronto para servir!`
-          );
-        }
-      }
-      prevReadyIds.current = currentReadyIds;
 
       setOrders(filtered);
       setLoading(false);

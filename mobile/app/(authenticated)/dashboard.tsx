@@ -6,7 +6,7 @@ import api from "@/services/api";
 import { Order } from "@/types";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
@@ -26,6 +27,65 @@ export default function Dashboard() {
 
   const [tableNumber, setTableNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const prevReadyIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    let sound: Audio.Sound | null = null;
+
+    async function playNotificationSound() {
+      try {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          require("../../assets/beep.wav")
+        );
+        sound = newSound;
+        await sound.playAsync();
+      } catch (err) {
+        console.log("Erro ao tocar som:", err);
+      }
+    }
+
+    async function checkReadyOrders() {
+      try {
+        const response = await api.get<Order[]>("/orders", {
+          params: { draft: "false" },
+        });
+
+        const filtered = response.data.filter(
+          (o) => o.status !== "CLOSED" && o.status !== "CANCELED"
+        );
+
+        const currentReadyIds = new Set(
+          filtered.filter((o) => o.status === "READY").map((o) => o.id)
+        );
+
+        if (prevReadyIds.current.size > 0) {
+          const newReady = [...currentReadyIds].filter(
+            (id) => !prevReadyIds.current.has(id)
+          );
+          if (newReady.length > 0) {
+            const newReadyOrder = filtered.find((o) => newReady.includes(o.id));
+            await playNotificationSound();
+            Alert.alert(
+              "Pedido Pronto!",
+              `O pedido da mesa ${newReadyOrder?.table || ""} está pronto para servir!`
+            );
+          }
+        }
+        prevReadyIds.current = currentReadyIds;
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    checkReadyOrders();
+    const interval = setInterval(checkReadyOrders, 10000);
+    return () => {
+      clearInterval(interval);
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
 
   async function handleOpenTable() {
     if (!tableNumber) {

@@ -40,7 +40,7 @@ export function CashierOrders({ token }: CashierOrdersProps) {
     fetchOrders();
     const intervalId = setInterval(() => {
       fetchOrders();
-    }, 5000);
+    }, 2000);
     return () => clearInterval(intervalId);
   }, [token]);
 

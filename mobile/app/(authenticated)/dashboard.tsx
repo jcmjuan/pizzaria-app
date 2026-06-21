@@ -78,7 +78,7 @@ export default function Dashboard() {
     }
 
     checkReadyOrders();
-    const interval = setInterval(checkReadyOrders, 10000);
+    const interval = setInterval(checkReadyOrders, 2000);
     return () => {
       clearInterval(interval);
       if (sound) {

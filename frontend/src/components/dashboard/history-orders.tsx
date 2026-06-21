@@ -40,7 +40,7 @@ export function HistoryOrders({ token }: HistoryOrdersProps) {
     fetchOrders();
     const intervalId = setInterval(() => {
       fetchOrders();
-    }, 30000);
+    }, 3000);
     return () => clearInterval(intervalId);
   }, [token]);
 

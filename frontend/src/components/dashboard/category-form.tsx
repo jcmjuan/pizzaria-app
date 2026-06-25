@@ -23,11 +23,13 @@ interface CategoryFormProps {
 
 export function CategoryForm({ category }: CategoryFormProps) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const isEditing = !!category;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
 
@@ -40,7 +42,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       router.refresh();
       return;
     } else {
-      console.log(result.error);
+      setError(result.error);
     }
   }
 
@@ -85,6 +87,10 @@ export function CategoryForm({ category }: CategoryFormProps) {
               className="border-app-border bg-app-background text-white"
             />
           </div>
+
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 p-3 rounded-md">{error}</p>
+          )}
 
           <Button
             type="submit"

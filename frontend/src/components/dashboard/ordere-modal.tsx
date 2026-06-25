@@ -8,6 +8,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import { finishOrderAction, startOrderAction, cancelOrderAction } from "@/actions/orders";
@@ -22,6 +32,8 @@ interface OrderModalProps {
 export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<"start" | "finish" | "cancel" | null>(null);
   const router = useRouter();
 
   const fetchOrder = async () => {
@@ -64,13 +76,14 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
     }, 0);
   };
 
-  const handleStartOrder = async () => {
+  const executeStartOrder = async () => {
     if (!orderId) return;
+    setError(null);
 
     const result = await startOrderAction(orderId);
 
     if (!result.success) {
-      console.log(result.error);
+      setError(result.error);
     }
 
     if (result.success) {
@@ -79,13 +92,14 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
     }
   };
 
-  const handleFinishOrder = async () => {
+  const executeFinishOrder = async () => {
     if (!orderId) return;
+    setError(null);
 
     const result = await finishOrderAction(orderId);
 
     if (!result.success) {
-      console.log(result.error);
+      setError(result.error);
     }
 
     if (result.success) {
@@ -94,22 +108,27 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
     }
   };
 
-  const handleCancelOrder = async () => {
+  const executeCancelOrder = async () => {
     if (!orderId) return;
-
-    const confirmed = window.confirm("Tem certeza que deseja cancelar este pedido?");
-    if (!confirmed) return;
+    setError(null);
 
     const result = await cancelOrderAction(orderId);
 
     if (!result.success) {
-      console.log(result.error);
+      setError(result.error);
     }
 
     if (result.success) {
       router.refresh();
       onClose();
     }
+  };
+
+  const handleConfirm = async () => {
+    if (pendingAction === "start") await executeStartOrder();
+    if (pendingAction === "finish") await executeFinishOrder();
+    if (pendingAction === "cancel") await executeCancelOrder();
+    setPendingAction(null);
   };
 
   const statusLabel = () => {
@@ -239,6 +258,9 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
         ) : null}
 
         <DialogFooter className="flex gap-3 sm:gap-3">
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 p-3 rounded-md w-full">{error}</p>
+          )}
           <Button
             variant="outline"
             onClick={() => onClose()}
@@ -250,7 +272,7 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
             <Button
               className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={loading}
-              onClick={handleCancelOrder}
+              onClick={() => setPendingAction("cancel")}
             >
               Cancelar Pedido
             </Button>
@@ -259,7 +281,7 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
             <Button
               className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold"
               disabled={loading}
-              onClick={handleStartOrder}
+              onClick={() => setPendingAction("start")}
             >
               Iniciar Preparo
             </Button>
@@ -268,13 +290,36 @@ export function OrderModal({ onClose, orderId, token }: OrderModalProps) {
             <Button
               className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
               disabled={loading}
-              onClick={handleFinishOrder}
+              onClick={() => setPendingAction("finish")}
             >
               Finalizar (Enviar p/ garçom)
             </Button>
           )}
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={pendingAction !== null} onOpenChange={() => setPendingAction(null)}>
+        <AlertDialogContent className="bg-app-card text-white border-app-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction === "start" && "Tem certeza que deseja iniciar o preparo deste pedido?"}
+              {pendingAction === "finish" && "Tem certeza que deseja finalizar e enviar para o garçom?"}
+              {pendingAction === "cancel" && "Tem certeza que deseja cancelar este pedido?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-app-border text-white hover:bg-transparent hover:text-white">
+              Fechar
+            </AlertDialogCancel>
+            <AlertDialogPrimitive.Action asChild>
+              <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                Confirmar
+              </Button>
+            </AlertDialogPrimitive.Action>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

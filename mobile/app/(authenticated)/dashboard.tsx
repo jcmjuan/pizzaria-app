@@ -58,18 +58,16 @@ export default function Dashboard() {
           filtered.filter((o) => o.status === "READY").map((o) => o.id)
         );
 
-        if (prevReadyIds.current.size > 0) {
-          const newReady = [...currentReadyIds].filter(
-            (id) => !prevReadyIds.current.has(id)
+        const newReady = [...currentReadyIds].filter(
+          (id) => !prevReadyIds.current.has(id)
+        );
+        if (newReady.length > 0) {
+          const newReadyOrder = filtered.find((o) => newReady.includes(o.id));
+          await playNotificationSound();
+          Alert.alert(
+            "Pedido Pronto!",
+            `O pedido da mesa ${newReadyOrder?.table || ""} está pronto para servir!`
           );
-          if (newReady.length > 0) {
-            const newReadyOrder = filtered.find((o) => newReady.includes(o.id));
-            await playNotificationSound();
-            Alert.alert(
-              "Pedido Pronto!",
-              `O pedido da mesa ${newReadyOrder?.table || ""} está pronto para servir!`
-            );
-          }
         }
         prevReadyIds.current = currentReadyIds;
       } catch (err) {

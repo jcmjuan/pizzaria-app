@@ -4,6 +4,7 @@ import { Select } from "@/components/Select";
 import { colors, fontSize, spacing } from "@/constants/theme";
 import api from "@/services/api";
 import { Category, Item, Product } from "@/types";
+import type { Order } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -201,6 +202,7 @@ export default function Order() {
 
   function handleAdvance() {
     if (items.length === 0) {
+      Alert.alert("Atenção", "Adicione pelo menos um item antes de avançar.");
       return;
     }
 

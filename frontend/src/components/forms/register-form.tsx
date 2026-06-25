@@ -78,6 +78,12 @@ export function RegisterForm() {
             {isPending ? "Criando conta..." : "Criar conta"}
           </Button>
 
+          {state?.error && (
+            <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+              {state.error}
+            </div>
+          )}
+
           <p className="text-center text-sm text-gray-100">
             Já tem uma conta?{" "}
             <Link href="/login" className="text-brand-primary font-semibold">

@@ -8,6 +8,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import { closeOrderAction } from "@/actions/orders";
@@ -22,6 +32,7 @@ interface CashierModalProps {
 export function CashierModal({ onClose, orders, token }: CashierModalProps) {
   const [detailedOrders, setDetailedOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -51,7 +62,7 @@ export function CashierModal({ onClose, orders, token }: CashierModalProps) {
     }, 0);
   };
 
-  const handleCloseOrder = async () => {
+  const executeCloseOrder = async () => {
     if (!orders || orders.length === 0) return;
 
     const orderIds = orders.map(o => o.id);
@@ -66,6 +77,11 @@ export function CashierModal({ onClose, orders, token }: CashierModalProps) {
       router.refresh();
       onClose();
     }
+  };
+
+  const handleConfirm = async () => {
+    setShowConfirm(false);
+    await executeCloseOrder();
   };
 
   return (
@@ -158,12 +174,33 @@ export function CashierModal({ onClose, orders, token }: CashierModalProps) {
           <Button
             className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold"
             disabled={loading}
-            onClick={handleCloseOrder}
+            onClick={() => setShowConfirm(true)}
           >
             Receber pagamento
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent className="bg-app-card text-white border-app-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja receber o pagamento e fechar a mesa?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-app-border text-white hover:bg-transparent hover:text-white">
+              Fechar
+            </AlertDialogCancel>
+            <AlertDialogPrimitive.Action asChild>
+              <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                Confirmar
+              </Button>
+            </AlertDialogPrimitive.Action>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

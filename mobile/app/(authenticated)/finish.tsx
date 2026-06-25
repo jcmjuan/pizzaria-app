@@ -25,6 +25,11 @@ export default function Finish() {
   const [loading, setLoading] = useState(false);
 
   async function handleFinishOrder() {
+    if (!customer.trim()) {
+      Alert.alert("Atenção", "Preencha o nome do cliente.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -39,6 +44,7 @@ export default function Finish() {
       router.replace("/(authenticated)/dashboard");
     } catch (err) {
       console.log(err);
+      Alert.alert("Erro", "Falha ao finalizar o pedido.");
     } finally {
       setLoading(false);
     }

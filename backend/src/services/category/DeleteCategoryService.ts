@@ -6,11 +6,11 @@ interface DeleteCategoryProps {
 
 class DeleteCategoryService {
   async execute({ id }: DeleteCategoryProps) {
-    const category = await prismaClient.category.findFirst({
+        const category = await prismaClient.category.findFirst({
       where: { id },
       include: {
         _count: {
-          select: { products: true }
+          select: { products: { where: { disabled: false } } }
         }
       }
     });

@@ -62,10 +62,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       if (error.response?.data?.error) {
         console.log(error.response?.data?.error);
-        return;
+        throw error;
       }
 
       console.log(error);
+      throw error;
     }
   }
 

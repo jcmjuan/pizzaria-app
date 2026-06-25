@@ -31,9 +31,10 @@ export default function Login() {
       setLoading(true);
       await signIn(email, password);
       router.replace("/(authenticated)/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
-      Alert.alert("Erro", "Erro ao fazer o login");
+      const msg = err?.response?.data?.error || "Erro ao fazer o login";
+      Alert.alert("Erro", msg);
     } finally {
       setLoading(false);
     }

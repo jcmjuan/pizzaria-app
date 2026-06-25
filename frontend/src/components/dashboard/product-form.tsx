@@ -48,6 +48,7 @@ export function ProductForm({ categories, product, children }: ProductFormProps)
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isChangingImage, setIsChangingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const isEditing = !!product;
 
   function convertBRLToCents(value: string): number {
@@ -124,8 +125,10 @@ export function ProductForm({ categories, product, children }: ProductFormProps)
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
+        setImageError("A imagem deve ter no máximo 5MB.");
         return;
       }
+      setImageError(null);
       setImageFile(file);
       setIsChangingImage(false);
       const reader = new FileReader();
@@ -240,6 +243,9 @@ export function ProductForm({ categories, product, children }: ProductFormProps)
 
           <div className="space-y-2">
             <Label className="mb-2">Imagem do produto</Label>
+            {imageError && (
+              <p className="text-sm text-red-500 bg-red-50 p-3 rounded-md">{imageError}</p>
+            )}
             {(imagePreview || (isEditing && product?.banner && !isChangingImage)) ? (
               <div className="relative w-full h-48 border rounded-lg overflow-hidden">
                 <Image
